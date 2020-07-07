@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <include file="$(find social_worlds)/launch/gazebo.launch">
+    <arg name="model" default="simple_room__approach_1" />
+    <arg name="enable_gui" default="true" />
+    <arg name="paused" default="false" />
+  </include>
+
+  <!-- <include file="$(find hera_bringup)/launch/bring_up.launch"/> -->
+  <!-- <include file="$(find hera_bringup)/launch/interface.launch"/> -->
+
+  <!-- <node name="social_move_base_node" pkg="social_move_base" type="social_move_base_node" output="screen" /> -->
+
+</launch>
