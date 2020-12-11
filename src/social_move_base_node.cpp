@@ -70,9 +70,20 @@ public:
     mb_goal.target_pose.pose = (*it).pose;
     ac_move_base.sendGoal(mb_goal,
       boost::bind(&SocialMoveBaseNode::callback_action_move_base_client_done, this, _1));
+
     ac_move_base.waitForResult();
 
-    as_social_navigation.setSucceeded(result_);
+    // TODO: inplement others states
+    if(ac_move_base.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+      as_social_navigation.setSucceeded(result_);
+      ROS_INFO("SUCCEEDED");
+    }
+    else
+    {
+      as_social_navigation.setAborted(result_);
+      ROS_INFO("ABORTED");
+    }
   }
 
   void callback_action_move_base_client_done(const actionlib::SimpleClientGoalState& state)
