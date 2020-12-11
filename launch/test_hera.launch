@@ -1,15 +1,34 @@
 <?xml version="1.0"?>
 <launch>
 
-  <include file="$(find social_worlds)/launch/gazebo.launch">
-    <arg name="model" default="simple_room__approach_1" />
-    <arg name="enable_gui" default="true" />
-    <arg name="paused" default="false" />
+  <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time}]: ${node}: ${message}"/>
+
+  <arg name="world_name"             default="simple_room" />
+  <arg name="map_name"               default="simple_room" />
+
+  <!-- simulator -->
+  <include file="$(find social_worlds)/launch/start_world.launch" >
+    <arg name="world_name" default="$(arg world_name)" />
+    <arg name="enable_gui" default="false" />
   </include>
 
-  <!-- <include file="$(find hera_bringup)/launch/bring_up.launch"/> -->
-  <!-- <include file="$(find hera_bringup)/launch/interface.launch"/> -->
+  <!-- robot -->
+  <include file="$(find hera_bringup)/launch/bring_up.launch" >
+    <arg name="map_name" default="$(arg map_name)" />
+  </include>
 
-  <!-- <node name="social_move_base_node" pkg="social_move_base" type="social_move_base_node" output="screen" /> -->
+  <!-- social_reasoning -->
+  <include file="$(find social_reasoning)/launch/social_reasoning.launch" />
+
+  <!-- social_navigation -->
+  <node name="social_navigation" pkg="social_move_base" type="social_move_base_node" output="screen" />
+
+  <!-- interface -->
+  <include file="$(find hera_bringup)/launch/interface.launch" >
+    <arg name="enable_gui_gazebo"   default="false"/>
+    <arg name="enable_gui_rviz"     default="true"/>
+    <arg name="enable_gui_teleop"   default="false"/>
+  </include>
+
 
 </launch>
