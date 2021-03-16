@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="global_planner" default="navfn/NavfnROS"/>
+
+  <node name="social_navigation" pkg="social_move_base" type="social_move_base_node.py" output="screen" >
+    <param name="global_planner" value="$(arg global_planner)"/>
+  </node>
+
+</launch>

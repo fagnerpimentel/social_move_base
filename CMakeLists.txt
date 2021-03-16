@@ -38,6 +38,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(social_move_base_node src/social_move_base_node.cpp)
-target_link_libraries(social_move_base_node ${catkin_LIBRARIES})
-add_dependencies(social_move_base_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_executable(social_move_base_node src/social_move_base_node.cpp)
+# target_link_libraries(social_move_base_node ${catkin_LIBRARIES})
+# add_dependencies(social_move_base_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

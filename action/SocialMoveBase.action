@@ -1,4 +1,6 @@
 string target_name
+string navigation_type
 ---
+string result
 ---
 geometry_msgs/PoseStamped base_position

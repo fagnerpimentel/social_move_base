@@ -5,6 +5,7 @@
 
   <arg name="world_name"             default="simple_room" />
   <arg name="map_name"               default="simple_room" />
+  <arg name="global_planner"         default="navfn/NavfnROS"/>
 
   <!-- simulator -->
   <include file="$(find social_worlds)/launch/start_world.launch" >
@@ -21,7 +22,9 @@
   <include file="$(find social_reasoning)/launch/social_reasoning.launch" />
 
   <!-- social_navigation -->
-  <node name="social_navigation" pkg="social_move_base" type="social_move_base_node" output="screen" />
+  <include file="$(find social_move_base)/launch/start.launch" >
+    <arg name="global_planner" default="$(ang global_planner)"/>
+  </include>
 
   <!-- interface -->
   <include file="$(find hera_bringup)/launch/interface.launch" >
