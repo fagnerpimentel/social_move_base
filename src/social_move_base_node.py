@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import copy
+import time
 import rospy
 import numpy
+import threading
 
 from actionlib import SimpleActionServer, SimpleActionClient, GoalStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -16,12 +18,14 @@ from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetPlan
 from nav_msgs.msg import Path
 from std_msgs.msg import Header
+from std_srvs.srv import Empty
 
 from util import *
 
 class SocialMoveBaseNode:
 
     def __init__(self):
+
 
         # general variables
         self.locals = {}
@@ -53,6 +57,7 @@ class SocialMoveBaseNode:
         rospy.loginfo('Subscribers ready.')
 
         self.scl_pathplan = init_service_client('/move_base/{}/make_plan'.format(self.global_planner.split("/", 1)[1]),GetPlan)
+        self.scl_clear_costmap = init_service_client('/move_base/clear_costmaps',Empty)
         rospy.loginfo('Services client ready.')
 
         self.ase_social_navigation = init_action_server('/social_navigation', SocialMoveBaseAction, self.__callback_ase_social_navigation__)
@@ -62,6 +67,15 @@ class SocialMoveBaseNode:
         rospy.loginfo('Actions client ready.')
 
         rospy.loginfo('Social navigation ready!')
+
+        #threading.Thread(target=self.thread_clear_costmaps).start()
+
+    def thread_clear_costmaps(self):
+        while not rospy.is_shutdown():
+            self.scl_clear_costmap()
+            time.sleep(2)
+
+
 
     def __callback_sub_locals__(self, data):
         # self.locals = data.locals
@@ -223,12 +237,46 @@ class SocialMoveBaseNode:
             target = self.get_free_pose(self.robot_pose, self.approach_target)
             self.send_goal(target)
 
+    # def get_free_pose_2(self, goal):
+    #     new_pose = copy.deepcopy(goal)
+    #
+    #     N = 1
+    #     while True:
+    #         if N%2 > 0: # N is odd:
+    #             new_pose.position.x += 1 # move right one step
+    #             if(self.costmap_is_free_at_position(new_pose.position)): break
+    #             for _ in range(N): # move down N steps
+    #                 new_pose.position.y -= 1
+    #                 if(self.costmap_is_free_at_position(new_pose.position)): break
+    #             for _ in range(N): # move left N steps
+    #                 new_pose.position.x -= 1
+    #                 if(self.costmap_is_free_at_position(new_pose.position)): break
+    #         else:
+    #             new_pose.position.x -= 1 # move left one step
+    #             if(self.costmap_is_free_at_position(new_pose.position)): break
+    #             for _ in range(N):
+    #                 new_pose.position.y -= 1 # move up N steps
+    #                 if(self.costmap_is_free_at_position(new_pose.position)): break
+    #             for _ in range(N):
+    #                 new_pose.position.x -= 1 # move right N steps
+    #                 if(self.costmap_is_free_at_position(new_pose.position)): break
+    #         N += 1
+    #
+    #
+    #     p1 = new_pose.position
+    #     p2 = self.actual_target.position
+    #     dist = numpy.sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2))
+    #     if(dist != 0):
+    #         alfa = numpy.arctan2(p2.y-p1.y,p2.x-p1.x)
+    #         q = euler_to_quaternion(0,0,alfa)
+    #         new_pose.orientation.x = q[0]
+    #         new_pose.orientation.y = q[1]
+    #         new_pose.orientation.z = q[2]
+    #         new_pose.orientation.w = q[3]
+    #     return new_pose
+
 
     def get_free_pose(self, start, goal):
-
-        # goal_aproach = copy.deepcopy(goal)
-        # if(type == 'person'):
-        #     goal_aproach = self.find_approach_pose(goal)
 
         plan = Path()
         srv = GetPlan()
