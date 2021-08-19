@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import copy
-import time
 import rospy
 import numpy
 import threading
@@ -18,7 +17,7 @@ from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetPlan
 from nav_msgs.msg import Path
 from std_msgs.msg import Header
-from std_srvs.srv import Empty
+from std_srvs.srv import Empty, EmptyResponse
 
 from util import *
 
@@ -26,6 +25,7 @@ class SocialMoveBaseNode:
 
     def __init__(self):
 
+        self.rate = rospy.Rate(25)
 
         # general variables
         self.locals = {}
@@ -56,6 +56,9 @@ class SocialMoveBaseNode:
         self.sub_costmap_global = init_subscriber('/move_base/global_costmap/costmap', OccupancyGrid, self.__callback_sub_costmap_global__)
         rospy.loginfo('Subscribers ready.')
 
+        self.sse_cancel = init_service_server('~cancel',Empty, self.__callback_sse_social_navigation_cancel__)
+        rospy.loginfo('Services server ready.')
+
         self.scl_pathplan = init_service_client('/move_base/{}/make_plan'.format(self.global_planner.split("/", 1)[1]),GetPlan)
         self.scl_clear_costmap = init_service_client('/move_base/clear_costmaps',Empty)
         rospy.loginfo('Services client ready.')
@@ -73,7 +76,7 @@ class SocialMoveBaseNode:
     def thread_clear_costmaps(self):
         while not rospy.is_shutdown():
             self.scl_clear_costmap()
-            time.sleep(2)
+            self.rate.sleep()
 
 
 
@@ -103,6 +106,13 @@ class SocialMoveBaseNode:
         self.costmap_global = data
     def __callback_sub_costmap_global__(self, data):
         self.costmap_global = data
+
+    def __callback_sse_social_navigation_cancel__(self, req):
+        er = EmptyResponse()
+        rospy.loginfo('cancel actual goal.')
+        self.acl_move_base.cancel_goal()
+        self.rate.sleep()
+        return er
 
     def set_new_target(self):
 
@@ -145,16 +155,19 @@ class SocialMoveBaseNode:
 
         diff = 0
         while diff < 5:
+            self.rate.sleep()
             self.set_new_target()
             target = self.get_free_pose(self.robot_pose, self.approach_target)
             self.send_goal(target)
             self.acl_move_base.wait_for_result()
             now = rospy.get_time()
             diff = now - self.target_last_move_time
-            print (diff)
+            # print (diff)
+
 
         self.ase_social_navigation.set_succeeded(_result)
         rospy.loginfo('SUCCEEDED')
+
 
 
     # def get_target(self, target_name):
@@ -201,7 +214,9 @@ class SocialMoveBaseNode:
 
     def send_goal(self, target):
         self.safe_target = copy.deepcopy(target)
-        self.acl_move_base.cancel_goal()
+        # self.acl_move_base.cancel_all_goals()
+        # self.acl_move_base.cancel_goal()
+        self.rate.sleep()
         goal = MoveBaseGoal()
         goal.target_pose.header = Header(0,rospy.Time.now(),"map")
         goal.target_pose.pose = target
@@ -217,6 +232,7 @@ class SocialMoveBaseNode:
     def __callback_acl_move_base_feedback__(self, feedback):
         # rospy.loginfo('Action server "navigation": Feedback - {}.'.format(feedback))
 
+        self.rate.sleep()
         if(self.target_type == 'LOCAL'):
             p1 = self.locals[self.target_name].pose.position
         if(self.target_type == 'PERSON'):
